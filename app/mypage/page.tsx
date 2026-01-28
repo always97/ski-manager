@@ -98,13 +98,13 @@ const MyPageContent = () => {
         {/* 기본 정보 섹션 */}
         <section className="space-y-4">
           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-            Basic Instructor Info
+            기본 설정
           </h3>
 
           <div className="space-y-4">
             <div>
               <label className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 ml-1 uppercase">
-                <User size={14} /> Instructor Name
+                <User size={14} /> Name
               </label>
               <input
                 name="username"
@@ -134,13 +134,13 @@ const MyPageContent = () => {
         {/* 강습 단가 섹션 */}
         <section className="space-y-4">
           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-            Service Rates
+            강습 단가
           </h3>
 
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 ml-1 uppercase">
-                ⛷️ Ski Rate
+                ⛷️ 스키 건당
               </label>
               <div className="relative">
                 <input
@@ -157,7 +157,7 @@ const MyPageContent = () => {
 
             <div>
               <label className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 ml-1 uppercase">
-                🏂 Board Rate
+                🏂 보드 건당
               </label>
               <div className="relative">
                 <input

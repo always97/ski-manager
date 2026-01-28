@@ -1,9 +1,8 @@
-// app/money/page.tsx
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Plus, ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
-import { deleteItem } from "./actions"; // 삭제 액션
+import { deleteItem } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -20,21 +19,20 @@ const MoneyPage = async () => {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // 1. 강습 기록 (수입) - time_slot 추가로 가져오기
+  // 1. 데이터 가져오기
   const { data: lessons } = await supabase
     .from("lessons")
     .select("id, date, income, type, time_slot, created_at")
     .eq("user_id", user.id)
     .order("date", { ascending: false });
 
-  // 2. 수령 기록 (지출/정산)
   const { data: withdrawals } = await supabase
     .from("withdrawals")
     .select("id, date, amount, memo, created_at")
     .eq("user_id", user.id)
     .order("date", { ascending: false });
 
-  // 3. 데이터 합치기 & 정렬
+  // 2. 데이터 통합 및 정렬
   const history = [
     ...(lessons || []).map((l) => ({ ...l, category: "INCOME" })),
     ...(withdrawals || []).map((w) => ({ ...w, category: "WITHDRAWAL" })),
@@ -44,12 +42,14 @@ const MoneyPage = async () => {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  const totalIncome = lessons?.reduce((sum, item) => sum + item.income, 0) || 0;
+  // 3. 합계 계산
+  const totalIncome =
+    lessons?.reduce((sum, item) => sum + (item.income ?? 0), 0) || 0;
   const totalWithdrawn =
-    withdrawals?.reduce((sum, item) => sum + item.amount, 0) || 0;
+    withdrawals?.reduce((sum, item) => sum + (item.amount ?? 0), 0) || 0;
   const balance = totalIncome - totalWithdrawn;
 
-  // 시간대별 텍스트와 이모지 헬퍼 함수
+  // 시간대별 정보 헬퍼
   const getTimeInfo = (slot: string) => {
     switch (slot) {
       case "AM":
@@ -81,27 +81,27 @@ const MoneyPage = async () => {
       <div className="bg-white p-6 pb-8 rounded-b-3xl shadow-sm border-b border-gray-100">
         <h1 className="text-xl font-bold mb-6">정산 관리 📒</h1>
         <div className="flex flex-col items-center">
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">
-            Current Balance
+          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">
+            현재 잔액
           </p>
           <h2
-            className={`text-4xl font-extrabold mb-8 ${balance < 0 ? "text-red-500" : "text-blue-600"}`}
+            className={`text-4xl font-black mb-8 ${balance < 0 ? "text-red-500" : "text-blue-600"}`}
           >
             {balance.toLocaleString()}{" "}
-            <span className="text-xl text-gray-800 font-normal">원</span>
+            <span className="text-xl text-gray-800 font-normal ml-1">원</span>
           </h2>
           <div className="flex w-full gap-3">
             <div className="flex-1 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-              <p className="text-[10px] text-gray-400 font-bold mb-1">
-                총 수익
+              <p className="text-[10px] text-gray-400 font-bold mb-1 uppercase">
+                누적 수익
               </p>
               <p className="font-bold text-gray-800">
                 {totalIncome.toLocaleString()}
               </p>
             </div>
             <div className="flex-1 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-              <p className="text-[10px] text-gray-400 font-bold mb-1">
-                총 수령액
+              <p className="text-[10px] text-gray-400 font-bold mb-1 uppercase">
+                누적 정산액
               </p>
               <p className="font-bold text-red-500">
                 -{totalWithdrawn.toLocaleString()}
@@ -115,9 +115,9 @@ const MoneyPage = async () => {
         <h3 className="font-bold text-lg text-gray-800">전체 내역</h3>
         <Link
           href="/money/add"
-          className="bg-black text-white text-[11px] px-3 py-1.5 rounded-full flex items-center font-bold shadow-md active:scale-95 transition-transform"
+          className="bg-black text-white text-[11px] px-3 py-1.5 rounded-full flex items-center font-bold shadow-lg active:scale-95 transition-all uppercase tracking-tighter"
         >
-          <Plus size={14} className="mr-1" /> 수령 기록
+          <Plus size={14} className="mr-1" /> 정산금 등록
         </Link>
       </div>
 
@@ -128,13 +128,18 @@ const MoneyPage = async () => {
             const timeInfo =
               item.category === "INCOME" ? getTimeInfo(item.time_slot) : null;
 
+            // ⭐ [에러 수정 포인트] 금액 결정 로직 강화
+            const displayAmount =
+              item.category === "INCOME"
+                ? (item.income ?? 0)
+                : (item.amount ?? 0);
+
             return (
               <div
                 key={item.id}
                 className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-50 relative overflow-hidden group"
               >
                 <div className="flex items-center gap-3">
-                  {/* 왼쪽 아이콘 */}
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       item.category === "INCOME"
@@ -157,7 +162,6 @@ const MoneyPage = async () => {
                           : item.memo || "정산 수령"}
                       </p>
 
-                      {/* ⭐ 시간대 뱃지 추가 ⭐ */}
                       {item.category === "INCOME" && (
                         <span
                           className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${timeInfo?.color}`}
@@ -166,13 +170,13 @@ const MoneyPage = async () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-gray-400 font-medium">
+                    <p className="text-[10px] text-gray-400 font-bold tracking-tight uppercase">
                       {item.date}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <span
                     className={`font-bold text-[15px] ${
                       item.category === "INCOME"
@@ -181,7 +185,7 @@ const MoneyPage = async () => {
                     }`}
                   >
                     {item.category === "INCOME" ? "+" : "-"}
-                    {(item.income || item.amount).toLocaleString()}
+                    {displayAmount.toLocaleString()}
                   </span>
 
                   {/* 삭제 버튼 */}
@@ -203,8 +207,8 @@ const MoneyPage = async () => {
             );
           })
         ) : (
-          <div className="text-center py-20 text-gray-400 text-sm">
-            내역이 없습니다.
+          <div className="text-center py-24 text-gray-300">
+            <p className="text-xs font-bold uppercase">기록이 없습니다.</p>
           </div>
         )}
       </div>
