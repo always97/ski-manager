@@ -27,9 +27,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-blue-600 mb-2">
-            스키마스터 ⛷️
+            강습마스터 ⛷️
           </h1>
-          <p className="text-gray-500">우리 팀 강습비 정산 관리</p>
+          <p className="text-gray-500">강습 정산 관리 사이트</p>
         </div>
 
         {/* 탭 버튼 */}

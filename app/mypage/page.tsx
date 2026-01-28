@@ -6,12 +6,16 @@ import { updateProfile } from "./actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, User, Users, Banknote } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 const MyPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const supabase = createClient();
+
+  const searchParams = useSearchParams();
+  const isFirst = searchParams.get("first");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -62,6 +66,16 @@ const MyPage = () => {
 
   return (
     <div className="p-6 pb-24 animate-in fade-in duration-500">
+      {isFirst && (
+        <div className="bg-blue-600 text-white p-5 rounded-2xl mb-8 animate-bounce">
+          <h2 className="font-bold text-lg">환영합니다! 🎉</h2>
+          <p className="text-sm opacity-90">
+            정확한 수익 계산을 위해
+            <br />
+            먼저 <strong>건당 강습비</strong>를 설정해주세요.
+          </p>
+        </div>
+      )}
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-gray-800">설정 ⚙️</h1>
         <p className="text-sm text-gray-400 mt-1 font-medium">

@@ -133,7 +133,7 @@ const Home = async (props: Props) => {
         <div className="relative z-10">
           <div className="flex justify-between items-center mb-3">
             <p className="text-blue-100 text-xs font-semibold uppercase tracking-wider">
-              {cMonth}월 수익
+              {cMonth}월 누적 수익
             </p>
             <div className="flex items-center gap-1 bg-black/20 rounded-full px-2 py-1 backdrop-blur-md">
               <Link href={`/?month=${prevMonthStr}`} className="p-1">
@@ -167,7 +167,9 @@ const Home = async (props: Props) => {
           </p>
         </div>
         <div className="bg-white border border-gray-100 p-3 rounded-2xl shadow-sm">
-          <p className="text-[10px] text-gray-400 font-bold mb-1">누적 가불</p>
+          <p className="text-[10px] text-gray-400 font-bold mb-1">
+            정산 & 가불
+          </p>
           <p className="text-[13px] font-bold text-red-500 truncate">
             -{accumulatedWithdrawal.toLocaleString()}
           </p>
