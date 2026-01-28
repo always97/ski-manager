@@ -1,22 +1,23 @@
 "use client";
-import { LogOut } from "lucide-react";
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { updateProfile } from "./actions";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, User, Users, Banknote } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { Loader2, User, Users, LogOut } from "lucide-react";
 
-const MyPage = () => {
+// 1. 실제 로직이 들어가는 컴포넌트
+const MyPageContent = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isFirst = searchParams.get("first"); // 회원가입 후 첫 진입 여부
+
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const supabase = createClient();
 
-  const searchParams = useSearchParams();
-  const isFirst = searchParams.get("first");
-
+  // 프로필 데이터 불러오기
   useEffect(() => {
     const fetchProfile = async () => {
       const {
@@ -36,6 +37,7 @@ const MyPage = () => {
     fetchProfile();
   }, [router, supabase]);
 
+  // 저장 버튼 핸들러
   const handleSubmit = async (formData: FormData) => {
     setLoading(true);
     const result = await updateProfile(formData);
@@ -43,17 +45,20 @@ const MyPage = () => {
     if (result.success) {
       toast.success("정보가 성공적으로 업데이트되었습니다! ✨");
       router.push("/");
-      router.refresh(); // 최신 데이터 반영을 위해 리프레시
+      router.refresh();
     } else {
       toast.error(result.error || "수정에 실패했습니다.");
       setLoading(false);
     }
   };
 
+  // 로그아웃 핸들러
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("로그아웃 되었습니다.");
-    router.push("/login");
+    if (confirm("로그아웃 하시겠습니까?")) {
+      await supabase.auth.signOut();
+      toast.success("로그아웃 되었습니다.");
+      router.push("/login");
+    }
   };
 
   if (!profile)
@@ -66,55 +71,61 @@ const MyPage = () => {
 
   return (
     <div className="p-6 pb-24 animate-in fade-in duration-500">
+      {/* 신규 가입자 안내 배너 */}
       {isFirst && (
-        <div className="bg-blue-600 text-white p-5 rounded-2xl mb-8 animate-bounce">
-          <h2 className="font-bold text-lg">환영합니다! 🎉</h2>
-          <p className="text-sm opacity-90">
+        <div className="bg-blue-600 text-white p-5 rounded-3xl mb-8 animate-bounce shadow-xl shadow-blue-200">
+          <h2 className="font-bold text-lg flex items-center gap-2">
+            환영합니다! 🎉
+          </h2>
+          <p className="text-sm opacity-90 leading-relaxed mt-1">
             정확한 수익 계산을 위해
             <br />
             먼저 <strong>건당 강습비</strong>를 설정해주세요.
           </p>
         </div>
       )}
+
       <header className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">설정 ⚙️</h1>
-        <p className="text-sm text-gray-400 mt-1 font-medium">
-          내 정보와 강습비를 관리하세요
+        <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+          설정 ⚙️
+        </h1>
+        <p className="text-xs text-gray-400 mt-1 font-bold uppercase tracking-widest">
+          Profile & Rates
         </p>
       </header>
 
       <form action={handleSubmit} className="space-y-8">
         {/* 기본 정보 섹션 */}
         <section className="space-y-4">
-          <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">
-            Basic Info
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+            Basic Instructor Info
           </h3>
 
           <div className="space-y-4">
             <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2 ml-1">
-                <User size={16} /> 강사 이름
+              <label className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 ml-1 uppercase">
+                <User size={14} /> Instructor Name
               </label>
               <input
                 name="username"
                 type="text"
                 defaultValue={profile.username}
-                placeholder="이름을 입력하세요"
+                placeholder="이름 입력"
                 required
-                className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl font-bold transition-all outline-none"
+                className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl font-bold transition-all outline-none text-gray-800"
               />
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2 ml-1">
-                <Users size={16} /> 소속 팀명
+              <label className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 ml-1 uppercase">
+                <Users size={14} /> Team Name
               </label>
               <input
                 name="team_name"
                 type="text"
                 defaultValue={profile.team_name}
-                placeholder="팀명을 입력하세요"
-                className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl font-bold transition-all outline-none"
+                placeholder="팀명 입력"
+                className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl font-bold transition-all outline-none text-gray-800"
               />
             </div>
           </div>
@@ -122,21 +133,21 @@ const MyPage = () => {
 
         {/* 강습 단가 섹션 */}
         <section className="space-y-4">
-          <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">
-            Rates per Lesson
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+            Service Rates
           </h3>
 
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2 ml-1">
-                ⛷️ 스키 단가
+              <label className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 ml-1 uppercase">
+                ⛷️ Ski Rate
               </label>
               <div className="relative">
                 <input
                   name="rate_ski"
                   type="number"
                   defaultValue={profile.rate_ski}
-                  className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl font-bold transition-all outline-none"
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl font-bold transition-all outline-none text-gray-800"
                 />
                 <span className="absolute right-4 top-4 text-gray-400 text-sm font-bold">
                   원
@@ -145,15 +156,15 @@ const MyPage = () => {
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-gray-600 mb-2 ml-1">
-                🏂 보드 단가
+              <label className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 ml-1 uppercase">
+                🏂 Board Rate
               </label>
               <div className="relative">
                 <input
                   name="rate_board"
                   type="number"
                   defaultValue={profile.rate_board}
-                  className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl font-bold transition-all outline-none"
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-2xl font-bold transition-all outline-none text-gray-800"
                 />
                 <span className="absolute right-4 top-4 text-gray-400 text-sm font-bold">
                   원
@@ -163,20 +174,44 @@ const MyPage = () => {
           </div>
         </section>
 
-        <button
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-100 active:scale-[0.98] transition-all disabled:opacity-50 flex justify-center mt-4"
-        >
-          {loading ? <Loader2 className="animate-spin" /> : "변경사항 저장하기"}
-        </button>
+        <div className="pt-2">
+          <button
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-100 active:scale-[0.98] transition-all disabled:opacity-50 flex justify-center"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              "변경사항 저장하기"
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full mt-6 flex items-center justify-center gap-2 text-gray-400 font-bold py-4 hover:text-red-500 transition-colors text-sm"
+          >
+            <LogOut size={16} /> 로그아웃 하기
+          </button>
+        </div>
       </form>
-      <button
-        onClick={handleLogout}
-        className="w-full mt-8 flex items-center justify-center gap-2 text-gray-400 font-bold py-4 hover:text-red-500 transition-colors"
-      >
-        <LogOut size={18} /> 로그아웃 하기
-      </button>
     </div>
+  );
+};
+
+// 2. Suspense로 감싼 메인 컴포넌트 (Next.js 빌드 에러 방지)
+const MyPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-screen text-gray-400 gap-2">
+          <Loader2 className="animate-spin" />
+          <p className="text-sm font-medium">페이지 로딩 중...</p>
+        </div>
+      }
+    >
+      <MyPageContent />
+    </Suspense>
   );
 };
 
