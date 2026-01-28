@@ -57,7 +57,7 @@ export default function LoginPage() {
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  이름 (본명)
+                  이름 (사용할 닉네임)
                 </label>
                 <input
                   name="name"
