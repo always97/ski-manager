@@ -29,7 +29,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-blue-600 mb-2">
             강습마스터 ⛷️
           </h1>
-          <p className="text-gray-500">강습 정산 관리 사이트</p>
+          <p className="text-gray-500">강습 정산 관리를 편하게</p>
         </div>
 
         {/* 탭 버튼 */}
@@ -74,7 +74,7 @@ export default function LoginPage() {
                 <input
                   name="team_name"
                   type="text"
-                  placeholder="예: A팀"
+                  placeholder="예: IS"
                   className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
