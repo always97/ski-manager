@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"; // Viewport 추가
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import { Toaster } from "sonner";
+import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
   title: "강습마스터 - 강사 정산 관리",
@@ -24,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
+        <NextTopLoader color="#2563eb" showSpinner={false} height={3} />
         <main className="min-h-screen max-w-md mx-auto bg-white shadow-xl relative pb-20">
           {children}
           <BottomNav />
