@@ -1,12 +1,32 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Plus, ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
+import {
+  Plus,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+} from "lucide-react";
 import { deleteItem } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const MoneyPage = async () => {
+interface Props {
+  searchParams: Promise<{ month?: string }>;
+}
+
+// 날짜 포맷팅 헬퍼
+const formatYM = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+};
+
+const MoneyPage = async (props: Props) => {
+  const searchParams = await props.searchParams;
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,35 +39,66 @@ const MoneyPage = async () => {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // 1. 데이터 가져오기
-  const { data: lessons } = await supabase
+  // --- 날짜 계산 로직 ---
+  const today = new Date();
+  const currentMonthStr = searchParams.month || formatYM(today);
+  const [year, month] = currentMonthStr.split("-").map(Number);
+
+  // 필터링 범위 (해당 월 1일 ~ 다음 달 1일 미만)
+  const startDate = new Date(year, month - 1, 1).toISOString().split("T")[0];
+  const nextMonthDate = new Date(year, month, 1).toISOString().split("T")[0];
+
+  // 네비게이션용 날짜
+  const prevMonthStr = formatYM(new Date(year, month - 2, 1));
+  const nextMonthStr = formatYM(new Date(year, month, 1));
+
+  // --- 데이터 가져오기 ---
+
+  // 1. 상단 카드용 전체 누적 데이터
+  const { data: allLessons } = await supabase
+    .from("lessons")
+    .select("income")
+    .eq("user_id", user.id);
+  const { data: allWithdrawals } = await supabase
+    .from("withdrawals")
+    .select("amount")
+    .eq("user_id", user.id);
+
+  const totalIncome =
+    allLessons?.reduce((sum, item) => sum + (item.income ?? 0), 0) || 0;
+  const totalWithdrawn =
+    allWithdrawals?.reduce((sum, item) => sum + (item.amount ?? 0), 0) || 0;
+  const balance = totalIncome - totalWithdrawn;
+
+  // 2. 하단 리스트용 월별 데이터 (날짜 필터 추가)
+  const { data: monthlyLessons } = await supabase
     .from("lessons")
     .select("id, date, income, type, time_slot, created_at")
     .eq("user_id", user.id)
+    .gte("date", startDate)
+    .lt("date", nextMonthDate)
     .order("date", { ascending: false });
 
-  const { data: withdrawals } = await supabase
+  const { data: monthlyWithdrawals } = await supabase
     .from("withdrawals")
     .select("id, date, amount, memo, created_at")
     .eq("user_id", user.id)
+    .gte("date", startDate)
+    .lt("date", nextMonthDate)
     .order("date", { ascending: false });
 
-  // 2. 데이터 통합 및 정렬
+  // 3. 데이터 통합 및 정렬
   const history = [
-    ...(lessons || []).map((l) => ({ ...l, category: "INCOME" })),
-    ...(withdrawals || []).map((w) => ({ ...w, category: "WITHDRAWAL" })),
+    ...(monthlyLessons || []).map((l) => ({ ...l, category: "INCOME" })),
+    ...(monthlyWithdrawals || []).map((w) => ({
+      ...w,
+      category: "WITHDRAWAL",
+    })),
   ].sort((a, b) => {
     if (a.date !== b.date)
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
-
-  // 3. 합계 계산
-  const totalIncome =
-    lessons?.reduce((sum, item) => sum + (item.income ?? 0), 0) || 0;
-  const totalWithdrawn =
-    withdrawals?.reduce((sum, item) => sum + (item.amount ?? 0), 0) || 0;
-  const balance = totalIncome - totalWithdrawn;
 
   // 시간대별 정보 헬퍼
   const getTimeInfo = (slot: string) => {
@@ -77,7 +128,7 @@ const MoneyPage = async () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* 상단 요약 카드 */}
+      {/* 상단 요약 카드 (기존 유지) */}
       <div className="bg-white p-6 pb-8 rounded-b-3xl shadow-sm border-b border-gray-100">
         <h1 className="text-xl font-bold mb-6">정산 관리 📒</h1>
         <div className="flex flex-col items-center">
@@ -111,8 +162,29 @@ const MoneyPage = async () => {
         </div>
       </div>
 
+      {/* 월 선택 네비게이션 (전체 내역 타이틀 대신 들어감) */}
       <div className="flex justify-between items-center px-6 mt-8 mb-4">
-        <h3 className="font-bold text-lg text-gray-800">전체 내역</h3>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/money?month=${prevMonthStr}`}
+            className="p-1 text-gray-400 hover:text-black transition-colors"
+          >
+            <ChevronLeft size={20} />
+          </Link>
+          <div className="flex items-center gap-1.5 font-bold text-gray-800">
+            <Calendar size={16} className="text-blue-600" />
+            <span>
+              {year}년 {month}월
+            </span>
+          </div>
+          <Link
+            href={`/money?month=${nextMonthStr}`}
+            className="p-1 text-gray-400 hover:text-black transition-colors"
+          >
+            <ChevronRight size={20} />
+          </Link>
+        </div>
+
         <Link
           href="/money/add"
           className="bg-black text-white text-[11px] px-3 py-1.5 rounded-full flex items-center font-bold shadow-lg active:scale-95 transition-all uppercase tracking-tighter"
@@ -121,14 +193,12 @@ const MoneyPage = async () => {
         </Link>
       </div>
 
-      {/* 내역 리스트 */}
+      {/* 내역 리스트 (기존 유지) */}
       <div className="px-6 space-y-3">
         {history.length > 0 ? (
           history.map((item: any) => {
             const timeInfo =
               item.category === "INCOME" ? getTimeInfo(item.time_slot) : null;
-
-            // ⭐ [에러 수정 포인트] 금액 결정 로직 강화
             const displayAmount =
               item.category === "INCOME"
                 ? (item.income ?? 0)
@@ -178,17 +248,12 @@ const MoneyPage = async () => {
 
                 <div className="flex items-center gap-3">
                   <span
-                    className={`font-bold text-[15px] ${
-                      item.category === "INCOME"
-                        ? "text-blue-600"
-                        : "text-gray-900"
-                    }`}
+                    className={`font-bold text-[15px] ${item.category === "INCOME" ? "text-blue-600" : "text-gray-900"}`}
                   >
                     {item.category === "INCOME" ? "+" : "-"}
                     {displayAmount.toLocaleString()}
                   </span>
 
-                  {/* 삭제 버튼 */}
                   <form
                     action={async () => {
                       "use server";
@@ -208,7 +273,9 @@ const MoneyPage = async () => {
           })
         ) : (
           <div className="text-center py-24 text-gray-300">
-            <p className="text-xs font-bold uppercase">기록이 없습니다.</p>
+            <p className="text-xs font-bold uppercase italic">
+              이 달의 기록이 없습니다.
+            </p>
           </div>
         )}
       </div>

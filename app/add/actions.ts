@@ -4,7 +4,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
-export const submitLesson = async (formData: FormData) => {
+export const submitLesson = async (
+  formData: FormData,
+  selectedSlots: string[],
+) => {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,50 +18,56 @@ export const submitLesson = async (formData: FormData) => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("로그인이 필요합니다.");
+  if (!user) throw new Error("로그인이 해제되었습니다. 다시 로그인해주세요.");
 
   const type = formData.get("type") as string;
   const date = formData.get("date") as string;
-  const timeSlot = formData.get("time_slot") as string;
 
-  // ⭐ [중복 체크 로직 추가]
-  // 같은 날짜(date)와 같은 시간대(time_slot)에 내가 올린 기록이 있는지 확인
-  const { data: existingLesson } = await supabase
-    .from("lessons")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("date", date)
-    .eq("time_slot", timeSlot)
-    .single();
-
-  if (existingLesson) {
-    // 이미 데이터가 있다면 에러를 던짐
-    throw new Error(
-      "이미 해당 시간대에 등록된 강습이 있습니다. 확인해주세요! 🧐",
-    );
-  }
-
-  // 내 프로필에서 단가 가져오기
   const { data: profile } = await supabase
     .from("profiles")
-    .select("rate_ski, rate_board")
+    .select("*")
     .eq("id", user.id)
     .single();
-
   const income =
     type === "SKI" ? profile?.rate_ski || 0 : profile?.rate_board || 0;
 
-  const { error } = await supabase.from("lessons").insert({
-    user_id: user.id,
-    date,
-    type,
-    time_slot: timeSlot,
-    income,
-  });
+  let insertedCount = 0;
+  let duplicateCount = 0;
 
-  if (error) throw new Error("등록 중 오류가 발생했습니다.");
+  // 모든 선택된 시간대를 순회
+  for (const slot of selectedSlots) {
+    const { data: exists } = await supabase
+      .from("lessons")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("date", date)
+      .eq("time_slot", slot)
+      .single();
+
+    if (exists) {
+      duplicateCount++; // 중복 횟수 체크
+      continue;
+    }
+
+    const { error } = await supabase.from("lessons").insert({
+      user_id: user.id,
+      date,
+      type,
+      time_slot: slot,
+      income,
+    });
+
+    if (!error) insertedCount++;
+  }
 
   revalidatePath("/");
   revalidatePath("/money");
   revalidatePath("/ranking");
+
+  return {
+    success: true,
+    insertedCount,
+    duplicateCount,
+    totalRequested: selectedSlots.length,
+  };
 };
