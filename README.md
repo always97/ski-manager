@@ -29,26 +29,31 @@
 ### 📹 핵심 기능 및 화면
 
 <br>
-실시간 강습 등록
 
-<img src="https://github.com/user-attachments/assets/5391c71a-1a7d-4af2-b806-8bda58883c49" width="50%"/>
+### 실시간 강습 등록
 
-<img src="https://github.com/user-attachments/assets/12b81b45-5b09-4f58-8360-8c5e4e9fa9d8" width="50%"/>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/5391c71a-1a7d-4af2-b806-8bda58883c49" width="45%"/>
+  <img src="https://github.com/user-attachments/assets/12b81b45-5b09-4f58-8360-8c5e4e9fa9d8" width="45%"/>
+</p>
 
-정산 대시보드
+### 정산 대시보드
 
-<img src="https://github.com/user-attachments/assets/54aafab2-a242-4514-8322-33d450f552ee" width="50%"/>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/54aafab2-a242-4514-8322-33d450f552ee" width="45%"/>
+  <img src="https://github.com/user-attachments/assets/5f13cd28-b099-4eb1-8fac-17b728bd5b26" width="45%"/>
+</p>
 
-<img src="https://github.com/user-attachments/assets/5f13cd28-b099-4eb1-8fac-17b728bd5b26" width="50%"/>
+### 주간/누적 랭킹
 
-주간/누적 랭킹
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/8a9c5cdc-91a6-4f69-baf6-d2290f31ba6f" width="45%"/>
+  <img src="https://github.com/user-attachments/assets/1228ddeb-ca89-4cc1-97df-c462309d64f2" width="45%"/>
+</p>
 
-<img src="https://github.com/user-attachments/assets/8a9c5cdc-91a6-4f69-baf6-d2290f31ba6f" width="50%"/>
+### 월별 내역 관리
 
-<img src="https://github.com/user-attachments/assets/1228ddeb-ca89-4cc1-97df-c462309d64f2" width="50%"/>
-
-월별 내역 관리
-<img src="https://github.com/user-attachments/assets/90755c06-74cc-4948-82a3-bb9a5bae85aa" width="50%" />
+<img src="https://github.com/user-attachments/assets/90755c06-74cc-4948-82a3-bb9a5bae85aa" width="30%" />
 
 ## 🛠 기술 스택
 
