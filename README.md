@@ -2,7 +2,7 @@
 
 스키 강사들을 위한 강습 등록 및 정산 관리 시스템
 
-![Image](https://github.com/user-attachments/assets/598ea127-d12e-415f-aaed-88681ba491e9)
+![Image](https://github.com/user-attachments/assets/280ee936-2853-4cd8-a358-9a7b38a64e2c)
 
 배포 주소: https://teamis.vercel.app
 
